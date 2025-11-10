@@ -47,13 +47,90 @@ class Config:
     PLOT_DPI = 100
     IMAGE_ANCHOR_COL = 'E1'
 
-# Page configuration
-st.set_page_config(
-    page_title="Energy Consumption Analyzer",
-    page_icon="⚡",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# ============================================
+# CUSTOM CSS FOR BETTER UI
+# ============================================
+
+st.markdown("""
+<style>
+    /* Main containers */
+    .block-container {
+        padding-top: 2rem;
+        max-width: 1200px;
+    }
+    
+    /* Info boxes */
+    .stAlert {
+        border-radius: 0.5rem;
+    }
+    
+    /* Metrics */
+    [data-testid="stMetricValue"] {
+        font-size: 1.5rem;
+    }
+    
+    /* File uploader - Dark theme */
+    [data-testid="stFileUploader"] {
+        border: 2px dashed #4a90e2;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        background: #1e1e1e;
+    }
+    
+    [data-testid="stFileUploader"] section {
+        background: #2d2d2d;
+        border-radius: 0.5rem;
+        padding: 2rem;
+    }
+    
+    [data-testid="stFileUploader"] section > div {
+        color: #ffffff;
+    }
+    
+    /* Upload text styling */
+    [data-testid="stFileUploader"] label {
+        color: #ffffff !important;
+    }
+    
+    /* Browse files button */
+    [data-testid="stFileUploader"] button {
+        background: #2d2d2d;
+        color: #ffffff;
+        border: 1px solid #4a90e2;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    [data-testid="stFileUploader"] button:hover {
+        background: #3d3d3d;
+        border-color: #5fa3f5;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        border-radius: 0.5rem;
+        font-weight: 600;
+    }
+    
+    /* Header styling */
+    .main-title {
+        text-align: center;
+        padding: 2rem 0 1rem 0;
+    }
+    
+    .main-title h1 {
+        color: #1f77b4;
+        margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #888;
+        margin-bottom: 2rem;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ============================================
 # UTILITY FUNCTIONS
@@ -998,6 +1075,7 @@ def create_export_options(results: Dict[str, Any]):
     
     st.info("💡 The Excel file includes all visualizations: heatmaps, monthly stats, seasonal patterns, and detailed analysis across multiple sheets.")
 
+
 # ============================================
 # MAIN STREAMLIT APPLICATION
 # ============================================
@@ -1007,43 +1085,87 @@ def main():
     
     initialize_session_state()
     
+    # Header
     st.markdown("""
-        <style>
-        .main > div {
-            padding-top: 2rem;
-        }
-        .stAlert {
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-        }
-        </style>
+        <div class='main-title'>
+            <h1>⚡ Energy Consumption Analyzer</h1>
+        </div>
+        <div class='subtitle'>
+            Automated analysis of quarter-hourly energy data
+        </div>
     """, unsafe_allow_html=True)
     
-    st.title("⚡ Energy Consumption Analyzer")
-    st.markdown("Automated analysis of quarter-hourly energy data")
+    # ============================================
+    # SIDEBAR CONFIGURATION
+    # ============================================
     
     with st.sidebar:
-        st.header("📁 Data Source")
-        uploaded_file = st.file_uploader(
-            "Upload your data file",
-            type=Config.SUPPORTED_FORMATS,
-            help="Supports Excel (.xlsx) and CSV files with quarter-hourly consumption data"
-        )
+        st.header("⚙️ Configuration")
         
-        st.info("✓ Handles US and EU date/number formats automatically")
+        # How to Use Section
+        with st.expander("ℹ️ How to Use", expanded=False):
+            st.markdown("""
+            1. **Upload** your data file (Excel or CSV)
+            2. **Select** date range for analysis
+            3. **Click** "Start Analysis"
+            4. **Download** comprehensive Excel report
+            """)
         
-        st.divider()
+        # Features Section
+        with st.expander("📋 Features", expanded=False):
+            st.markdown("""
+            ✅ Data quality validation  
+            ✅ Multiple visualization types  
+            ✅ Hourly heatmaps (yearly, Jan, Jul)  
+            ✅ Hourly and monthly summaries  
+            ✅ Peak demand analysis  
+            ✅ Load duration curves  
+            ✅ Monthly min/max statistics  
+            ✅ Comprehensive Excel report  
+            ✅ Handles US and EU formats  
+            ✅ Auto-detects file encoding
+            """)
+    
+    # ============================================
+    # MAIN CONTENT AREA
+    # ============================================
+    
+    # Information Section - Two columns
+    col1, col2 = st.columns(2)
+    
+    # LEFT COLUMN: Expected Data Format
+    with col1:
+        st.markdown("### ℹ️ Expected Data Format")
+        st.markdown(f"""
+        **Column structure:**
+        - **Column 0**: Date
+        - **Column 1**: Time  
+        - **Column 2**: Consumption value
         
-        st.header("📅 Date Range")
+        **Supported formats:**
+        - Date: DD.MM.YYYY, MM/DD/YYYY, YYYY-MM-DD
+        - Time: HH:MM:SS, HH:MM
+        - Numbers: Both US (.) and EU (,) decimal formats
+        
+        **File requirements:**
+        - Maximum size: {Config.MAX_FILE_SIZE_MB}MB
+        - Formats: {', '.join(Config.SUPPORTED_FORMATS)}
+        """)
+    
+    # RIGHT COLUMN: Date Range Selection
+    with col2:
+        st.markdown("### 📅 Date Range Selection")
+        
         date_selection = st.radio(
             "Select date range:",
             options=['all', 'recent', 'custom'],
             format_func=lambda x: {
                 'all': '📊 Analyze all available data',
-                'recent': '📈 Most recent full year only',
+                'recent': '📅 Most recent full year only',
                 'custom': '🎯 Specific year'
             }[x],
-            index=0
+            index=0,
+            label_visibility="collapsed"
         )
         
         selected_year = None
@@ -1057,56 +1179,60 @@ def main():
         else:
             selected_year = datetime.now().year
         
-        st.divider()
+        # Display selected range info
+        if date_selection == 'all':
+            st.info("**Range:** All available data")
+        elif date_selection == 'recent':
+            st.info(f"**Range:** Most recent full year")
+        else:
+            st.info(f"**Range:** Year {selected_year}")
+    
+    st.markdown("---")
+    
+    # ============================================
+    # UPLOAD SECTION
+    # ============================================
+    
+    st.markdown("### 📁 Upload Files")
+    
+    st.markdown("**Choose your data file to process**")
+    st.caption(f"Limit {Config.MAX_FILE_SIZE_MB}MB per file • {', '.join(Config.SUPPORTED_FORMATS).upper()}")
+    
+    uploaded_file = st.file_uploader(
+        "Upload your data file",
+        type=Config.SUPPORTED_FORMATS,
+        label_visibility="collapsed"
+    )
+    
+    if uploaded_file is not None:
+        # File uploaded indicator
+        st.markdown(f"""
+            <div style='background: #d4edda; padding: 0.75rem; border-radius: 0.5rem; 
+                        text-align: center; margin: 1rem 0; border-left: 4px solid #28a745;'>
+                <strong style='color: #155724;'>✅ File uploaded: {uploaded_file.name}</strong>
+            </div>
+        """, unsafe_allow_html=True)
         
-        file_valid = False
-        if uploaded_file is not None:
-            file_valid = validate_uploaded_file(uploaded_file)
+        file_valid = validate_uploaded_file(uploaded_file)
         
+        st.markdown("---")
+        
+        # Analyze button
         analyze_button = st.button(
             "🚀 Start Analysis",
             type="primary",
             disabled=not file_valid,
             use_container_width=True
         )
+    else:
+        analyze_button = False
+        file_valid = False
     
-    if uploaded_file is None:
-        st.info("👈 Upload a file to begin analysis")
-        
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.markdown("### ℹ️ Expected Data Format")
-            st.markdown(f"""
-            - **Column 0**: Date
-            - **Column 1**: Time  
-            - **Column 2**: Consumption value
-            
-            **Supported formats:**
-            - Date: DD.MM.YYYY, MM/DD/YYYY, YYYY-MM-DD
-            - Time: HH:MM:SS, HH:MM
-            - Numbers: Both US (.) and EU (,) decimal formats
-            
-            **File requirements:**
-            - Maximum size: {Config.MAX_FILE_SIZE_MB}MB
-            - Formats: {', '.join(Config.SUPPORTED_FORMATS)}
-            """)
-        
-        with col2:
-            st.markdown("### 📋 Features")
-            st.markdown("""
-            This tool automatically generates:
-            - ✅ Data quality validation
-            - 📊 Multiple visualization types
-            - 🔥 Hourly heatmaps (yearly, Jan, Jul)
-            - 📈 Hourly and monthly summaries
-            - ⚡ Peak demand analysis
-            - 📉 Load duration curves
-            - 📊 Monthly min/max statistics
-            - 📥 Comprehensive Excel report
-            """)
+    # ============================================
+    # PROCESSING AND RESULTS
+    # ============================================
     
-    elif analyze_button:
+    if analyze_button and file_valid:
         file_content = uploaded_file.getvalue()
         current_hash = get_file_hash(file_content)
         
@@ -1137,16 +1263,19 @@ def main():
             st.error("❌ Failed to process data. Please check your file format.")
             st.stop()
         
+        # Data Quality Report
         with st.expander("🔍 Data Quality Report", expanded=bool(results['issues'])):
             show_data_quality_report(results['issues'])
         
         st.success(f"✅ Analysis complete! {results['date_range_info']}")
         
+        # Key Metrics
         st.markdown("### 📊 Key Metrics")
         display_summary_metrics(results)
         
         st.divider()
         
+        # Results Tabs
         tab1, tab2, tab3 = st.tabs([
             "📊 Visualizations",
             "📋 Data Tables",
@@ -1164,5 +1293,7 @@ def main():
             st.markdown("Download your analysis in multiple formats:")
             create_export_options(results)
 
+
 if __name__ == "__main__":
     main()
+
